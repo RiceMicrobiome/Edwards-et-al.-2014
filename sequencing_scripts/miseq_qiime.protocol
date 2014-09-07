@@ -1,0 +1,27 @@
+# Concatenate the barcodes together
+concat_fq.pl -f R3.fq -r R2.fq > barcodes.fq
+
+# Demultiplex the barcodes
+demultiplex.pl -m mapping_file.txt -b barcodes.fq > groups.txt
+
+# Pull out specific reads that belong to the groups for first read
+fq_group_extract.pl -g groups.txt -q R1.fastq > R1_grouped.fq
+
+# Pull out specific reads that belong to the groups for second read
+fq_group_extract.pl -g groups.txt -q R4.fastq > R4_grouped.fq
+
+# Use mothur to assemble the reads into contigs
+mothur "#make.contigs(ffastq=R1_grouped.fq, rfastq=R4_grouped.fq, processors=8)"
+
+# Replace underscore with semicolon in the contigs file
+sed 's/_/:/g' $dir/$prefix.trim.contigs.fasta > $dir/contigs.fa
+
+# Mothur changes the order of everything, and saves the sequences as FASTA
+# So we'll have to lie about the qualities of the reads
+fa_to_fq.pl -q H contigs.fa > contigs.fq
+
+# Sort the group file to match the contigs file
+group_order.pl -g groups.txt -q contigs.fq > groups_ordered.txt
+
+# Make the qiime compatible FASTA file
+fa_assemble_from_group.pl groups_ordered.txt contigs.fq > final_seqs.fa
