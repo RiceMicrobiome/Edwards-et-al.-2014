@@ -1,5 +1,6 @@
 library(reshape2)
 library(ggplot2)
+library(vegan)
 
 ### Set the working directory
 setwd("~/RMB/Publication/Data/GreenhouseExp/")
@@ -115,6 +116,15 @@ ggplot(subset(adiv, Compartment == "Rhizosphere"), aes(x = Cultivar, y = exp(Sha
   labs(x = "", y = "Effective Species") +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), text = element_text(size = 30), legend.key = element_blank())
 
+ggplot(adiv, aes(x = Cultivar, y = exp(Shannon), fill = Cultivar)) +
+  geom_boxplot(outlier.size = 1) +
+  scale_fill_manual(values = c(cult.cols, "grey")) +
+  facet_grid(Compartment~Site) +
+  theme_bw() +
+  labs(x = "", y = "Effective Species") +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), text = element_text(size = 30), legend.key = element_blank())
+
+
 ggplot(adiv, aes(x = Compartment, y = exp(Shannon), fill = Compartment)) +
   geom_boxplot(outlier.size = 1) +
   scale_fill_manual(values = c("#E41A1C", "#984EA3", "#4DAF4A", "#377EBA")) +
@@ -122,3 +132,31 @@ ggplot(adiv, aes(x = Compartment, y = exp(Shannon), fill = Compartment)) +
   theme_bw() +
   labs(x = "", y = "Effective Species") +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), text = element_text(size = 30), legend.key = element_blank())
+
+## T tests to examine pairwise differences in a-divs between all comapartments of all soils
+remove.dup <- function(df) {
+  df.sort <- t(apply(df, 1, sort))
+  df.sort <- df[!duplicated(df.sort),]
+  return(df.sort)
+}
+
+comp_pair_t_test <- function(x) {
+  out_df = data.frame(Compartment1 = NA, Compartment2 = NA, p.value = NA)
+  comps <- levels(x$Compartment)
+  for (i in 1:length(comps)) {
+    comp1 <- comps[i]
+    for(j in 1:length(comps)) {
+      comp2 <- comps[j]
+      p.val <- t.test(x[x$Compartment == comp1,]$Shannon, x[x$Compartment == comp2,]$Shannon)$p.value
+      out_df <- rbind(out_df, c(comp1, comp2, p.val))
+    }
+  }
+  out_df <- out_df[complete.cases(out_df),]
+  final <- remove.dup(out_df)
+  final <- final[final$Compartment1 != final$Compartment2,]
+  final <- cbind(final, padj = p.adjust(final$p.value, method = "BH"))
+  return(final)
+}
+arb_comp <- comp_pair_t_test(subset(adiv, Site == "Arbuckle"))
+dav_comp <- comp_pair_t_test(subset(adiv, Site == "Davis"))
+sac_comp <- comp_pair_t_test(subset(adiv, Site == "Sacramento"))
