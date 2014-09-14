@@ -24,12 +24,52 @@ gh.map$Compartment <- factor(gh.map$Compartment, levels = c("Bulk Soil", "Rhizos
 gh.phy <- aggregate(gh.counts, data.frame(gh.tax$Phylum), sum)
 row.names(gh.phy) <- gh.phy[,1]
 gh.phy <- gh.phy[,-1]
+gh.phy.t <- t(gh.phy)
+gh.phy.t <- data.frame(gh.phy.t[match(row.names(gh.map), row.names(gh.phy.t)),])
+
+### Pairwise t.tests on phyla
+
+phy.pair.t <- function(phyla_counts, groups, method = "BH") {
+  phyla_counts <- data.frame(phyla_counts)
+  taxa <- names(phyla_counts)
+  group_names <- as.character(unique(groups))
+  out.df <- data.frame(Taxa = NA, Group1 = NA, Group2 = NA, pval = NA, padj = NA)
+  
+  # Loop through taxa
+  for (i in 1:ncol(phyla_counts)) {
+    tax <- taxa[i]
+    tax.counts <- phyla_counts[,i]
+    temp.df <- data.frame(Taxa = NA, Group1 = NA, Group2 = NA, pval = NA)
+    for (j in 1:length(group_names)) {
+      group1 <- group_names[j]
+      group1.counts <- as.numeric(tax.counts[groups == group1])
+      #print(c(length(group1.counts), group1))
+      for (k in 1:length(group_names)) {
+        group2 <- group_names[k]
+        group2.counts <- as.numeric(tax.counts[groups == group2])
+        print(c(length(group1.counts), length(group2.counts)))
+        p.val <- t.test(group1.counts, group2.counts)$p.value
+        temp.df <- rbind(temp.df, c(tax, group1, group2, p.val))
+      }
+    }
+    temp.df <- remove.dup(temp.df)
+    temp.df <- temp.df[complete.cases(temp.df),]
+    temp.df <- temp.df[temp.df$Group1 != temp.df$Group2,]
+    #print(temp.df)
+    temp.df$padj <- p.adjust(temp.df$pval, method = method)
+    out.df <- rbind(out.df, temp.df)
+  }
+  out.df <- out.df[complete.cases(out.df),]
+  out.df <- remove.dup(out.df)
+  return(out.df)
+}
+
+phyla.sig.comp <- subset(phy.pair.t(gh.phy.t, gh.map$Compartment), padj <= 0.05)
 
 ### Extract the top15 highest represented phyla
 top.15 <- names(head(sort(rowSums(gh.phy), decreasing = T), 15))
 other <- colSums(gh.phy[!row.names(gh.phy)%in%top.15,])
 gh.phy.15 <- rbind(gh.phy[row.names(gh.phy)%in%top.15,], other = other)
-
 
 ### Melt into a long data frame for plotting
 gh.phy.whole <- melt(cbind(gh.map, t(gh.phy.15)))
@@ -50,6 +90,12 @@ ggplot(gh.phy.whole, aes(x = plot_lab, y = value, fill = variable)) +
   labs(x = "", y = "Proportion of Counts", fill = "Phylum") +
   theme(text = element_text(size = 30), axis.text.y = element_text(size = 20)) +
   guides(fill = guide_legend(reverse = T))
+
+################################################
+## See if there are significant differences between 
+## certain phyla in the different compartments
+################################################
+
 
 
 ################################################
@@ -147,7 +193,7 @@ comp_pair_t_test <- function(x) {
     comp1 <- comps[i]
     for(j in 1:length(comps)) {
       comp2 <- comps[j]
-      p.val <- t.test(x[x$Compartment == comp1,]$Shannon, x[x$Compartment == comp2,]$Shannon)$p.value
+      p.val <- t.test(exp(x[x$Compartment == comp1,]$Shannon), exp(x[x$Compartment == comp2,]$Shannon))$p.value
       out_df <- rbind(out_df, c(comp1, comp2, p.val))
     }
   }

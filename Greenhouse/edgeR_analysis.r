@@ -33,6 +33,9 @@ da.comp.site.gh.counts <- data.frame(Value = c(
   Comp= rep(c("Endosphere", "Rhizoplane", "Rhizosphere"), 6),
   Category = rep(c(rep("up" , 3), rep("down", 3)), 3))
 
+tax.colors <- data.frame(Phylum = c("Acidobacteria", "Actinobacteria", "Armatimonadetes", "Bacteroidetes", "Chloroflexi", "Fibrobacteres", "Firmicutes", "Gemmatimonadetes", "Nitrospirae", "Planctomycetes", "Proteobacteria", "Spirochaetes", "unclassified", "Verrucomicrobia", "WS3", "other","ns"), 
+                         Color = c("mediumpurple3", "palegreen4", "skyblue1", "darkorange", "darkseagreen", "firebrick4", "red", "gold", "goldenrod4", "dodgerblue4", "orange", "forestgreen", "grey", "orchid", "darkmagenta", "black", "grey50"))
+
 da.comp.site.gh.counts$x.vp <- rep(c(rep(7.5 , 3), rep(-8, 3)), 3)
 da.comp.site.gh.counts$y.vp <- rep(110, nrow(da.comp.site.gh.counts))
 da.comp.site.gh.counts$x.ma <- rep(1, nrow(da.comp.site.gh.counts))
@@ -42,6 +45,13 @@ da.comp.site.gh.counts$color <- factor(ifelse(da.comp.site.gh.counts$Category ==
 gh.comp.site.glm$sig <- ifelse(gh.comp.site.glm$padj > thresh.p, "ns", "s")
 gh.comp.site.glm$color <- ifelse(gh.comp.site.glm$padj > thresh.p, "ns", ifelse(gh.comp.site.glm$logFC < 0, "bs", ifelse(gh.comp.site.glm$Comp == "Endosphere", "E", ifelse(gh.comp.site.glm$Comp == "Rhizoplane", "RP", "RS"))))
 gh.comp.site.glm$color <- factor(gh.comp.site.glm$color, levels = c("ns", "bs", "E", "RP", "RS"))
+
+gh.comp.site.glm.tax <- gh.comp.site.glm
+gh.comp.site.glm.tax$Phylum <- tax[match(gh.comp.site.glm.tax$OTU, tax$OTU),]$Phylum
+levels(gh.comp.site.glm.tax$Phylum) <- c(levels(gh.comp.site.glm.tax$Phylum), "other", "ns")
+gh.comp.site.glm.tax$Phylum[gh.comp.site.glm.tax$color == "ns"] <- "ns"
+gh.comp.site.glm.tax$Phylum[!gh.comp.site.glm.tax$Phylum%in%tax.colors$Phylum] <- "other"
+gh.comp.site.glm.tax$Phylum <- factor(gh.comp.site.glm.tax$Phylum, levels = as.character(tax.colors$Phylum))
 
 sig.otus <- subset(gh.comp.site.glm, color != "ns")
 sig.tax <- tax[tax$OTU%in%unique(sig.otus$OTU),]
@@ -60,6 +70,15 @@ ggplot(gh.comp.site.glm, aes(x = logCPM, y = logFC, color = color, alpha = sig))
   theme(text = element_text(size = 20), axis.text.y = element_text(size = 10)) +
   labs(x = "Log 10 Abundance", y = "Log 10 Fold Change")
 
+ggplot(gh.comp.site.glm.tax, aes(x = logCPM, y = logFC, color = Phylum, alpha = sig)) +
+  geom_point() +
+  scale_color_manual(values = as.character(tax.colors$Color))+#, guide = FALSE) +
+  scale_alpha_manual(values = c(0.2, 1), guide = FALSE) +
+  facet_grid(Site ~ Comp) +
+  geom_text(aes(x = x.ma, y = y.ma, label = Value, group= NULL), data= da.comp.site.gh.counts, inherit.aes = FALSE, parse = FALSE, size= 8) +
+  theme_bw() +
+  theme(text = element_text(size = 20), axis.text.y = element_text(size = 10)) +
+  labs(x = "Log 10 Abundance", y = "Log 10 Fold Change")
 
 arb.e.up <- subset(gh.comp.site.glm, color == "E" & Site == "Arbuckle")$OTU
 arb.rp.up <- subset(gh.comp.site.glm, color == "RP" & Site == "Arbuckle")$OTU
