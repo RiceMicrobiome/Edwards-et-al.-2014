@@ -186,6 +186,7 @@ remove.dup <- function(df) {
   return(df.sort)
 }
 
+## Do pairwise t-tests on compartments for certain soils
 comp_pair_t_test <- function(x) {
   out_df = data.frame(Compartment1 = NA, Compartment2 = NA, p.value = NA)
   comps <- levels(x$Compartment)
@@ -206,3 +207,28 @@ comp_pair_t_test <- function(x) {
 arb_comp <- comp_pair_t_test(subset(adiv, Site == "Arbuckle"))
 dav_comp <- comp_pair_t_test(subset(adiv, Site == "Davis"))
 sac_comp <- comp_pair_t_test(subset(adiv, Site == "Sacramento"))
+
+comp_site_pair_t_test <- function(x) {
+  out_df = data.frame(Compartment1 = NA, Site1 = NA, Compartment2 = NA, Site2 = NA, p.value = NA)
+  x$compsite <- factor(paste(x$Compartment, x$Site, sep = "_"))
+  compsites <- levels(x$compsite)
+  for (i in 1:length(compsites)) {
+    compsite1 <- compsites[i]
+    comp1 <- strsplit(compsite1, split = "_")[[1]][1]
+    site1 <- strsplit(compsite1, split = "_")[[1]][2]
+    for(j in 1:length(compsites)) {
+      compsite2 <- compsites[j]
+      comp2 <- strsplit(compsite2, split = "_")[[1]][1]
+      site2 <- strsplit(compsite2, split = "_")[[1]][2]
+      p.val <- t.test(exp(x[x$Compartment == comp1 & x$Site == site1,]$Shannon), exp(x[x$Compartment == comp2 & x$Site == site2,]$Shannon))$p.value
+      out_df <- rbind(out_df, c(comp1, site1, comp2, site2, p.val))
+    }
+  }
+  out_df <- out_df[complete.cases(out_df),]
+  final <- remove.dup(out_df)
+  final <- final[paste(final$Compartment1, final$Site1) != paste(final$Compartment2, final$Site2),]
+  final <- cbind(final, padj = p.adjust(final$p.value, method = "BH"))
+  return(final)
+}
+
+comp_site_comparisons <- comp_site_pair_t_test(adiv)

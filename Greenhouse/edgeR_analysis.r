@@ -72,7 +72,7 @@ ggplot(gh.comp.site.glm, aes(x = logCPM, y = logFC, color = color, alpha = sig))
 
 ggplot(gh.comp.site.glm.tax, aes(x = logCPM, y = logFC, color = Phylum, alpha = sig)) +
   geom_point() +
-  scale_color_manual(values = as.character(tax.colors$Color))+#, guide = FALSE) +
+  scale_color_manual(values = as.character(tax.colors$Color), guide = FALSE) +
   scale_alpha_manual(values = c(0.2, 1), guide = FALSE) +
   facet_grid(Site ~ Comp) +
   geom_text(aes(x = x.ma, y = y.ma, label = Value, group= NULL), data= da.comp.site.gh.counts, inherit.aes = FALSE, parse = FALSE, size= 8) +
