@@ -29,7 +29,7 @@ gh.phy.t <- data.frame(gh.phy.t[match(row.names(gh.map), row.names(gh.phy.t)),])
 
 ### Pairwise t.tests on phyla
 
-phy.pair.t <- function(phyla_counts, groups, method = "BH") {
+phy.pair.wilcox.test <- function(phyla_counts, groups, method = "BH") {
   phyla_counts <- data.frame(phyla_counts)
   taxa <- names(phyla_counts)
   group_names <- as.character(unique(groups))
@@ -47,8 +47,8 @@ phy.pair.t <- function(phyla_counts, groups, method = "BH") {
       for (k in 1:length(group_names)) {
         group2 <- group_names[k]
         group2.counts <- as.numeric(tax.counts[groups == group2])
-        print(c(length(group1.counts), length(group2.counts)))
-        p.val <- t.test(group1.counts, group2.counts)$p.value
+        #print(c(length(group1.counts), length(group2.counts)))
+        p.val <- wilcox.test(group1.counts, group2.counts)$p.value
         temp.df <- rbind(temp.df, c(tax, group1, group2, p.val))
       }
     }
@@ -64,7 +64,22 @@ phy.pair.t <- function(phyla_counts, groups, method = "BH") {
   return(out.df)
 }
 
-phyla.sig.comp <- subset(phy.pair.t(gh.phy.t, gh.map$Compartment), padj <= 0.05)
+gh.phy.t.davis <- gh.phy.t[match(row.names(subset(gh.map, Site == "Davis")), row.names(gh.phy.t)),]
+gh.phy.t.arbuckle <- gh.phy.t[match(row.names(subset(gh.map, Site == "Arbuckle")), row.names(gh.phy.t)),]
+gh.phy.t.sac <- gh.phy.t[match(row.names(subset(gh.map, Site == "Sacramento")), row.names(gh.phy.t)),]
+
+phyla.comp.dav <- cbind(phy.pair.wilcox.test(gh.phy.t.davis, subset(gh.map, Site == "Davis")$Compartment), Site = "Davis")
+phyla.comp.arb <- cbind(phy.pair.wilcox.test(gh.phy.t.arbuckle, subset(gh.map, Site == "Arbuckle")$Compartment), Site = "Arbuckle")
+phyla.comp.sac <- cbind(phy.pair.wilcox.test(gh.phy.t.sac, subset(gh.map, Site == "Sacramento")$Compartment), Site = "Sacramento")
+
+phyla.comp.whole <- rbind(phyla.comp.dav, phyla.comp.arb, phyla.comp.sac)
+write.table(phyla.sig.comp.whole, file = "~/RMB/Publication/Data/GreenhouseExp/sig_phyla.txt", sep = "\t", quote = F)
+
+ggplot(phyla.comp.whole, aes(x = Taxa, y = -log(padj), color = Site)) +
+  geom_point() +
+  geom_hline(y = 2.995) +
+  facet_grid(Group1 ~ Group2) +
+  theme(axis.text.x = element_text(angle = 90))
 
 ### Extract the top15 highest represented phyla
 top.15 <- names(head(sort(rowSums(gh.phy), decreasing = T), 15))
@@ -180,12 +195,6 @@ ggplot(adiv, aes(x = Compartment, y = exp(Shannon), fill = Compartment)) +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), text = element_text(size = 30), legend.key = element_blank())
 
 ## T tests to examine pairwise differences in a-divs between all comapartments of all soils
-remove.dup <- function(df) {
-  df.sort <- t(apply(df, 1, sort))
-  df.sort <- df[!duplicated(df.sort),]
-  return(df.sort)
-}
-
 ## Do pairwise t-tests on compartments for certain soils
 comp_pair_t_test <- function(x) {
   out_df = data.frame(Compartment1 = NA, Compartment2 = NA, p.value = NA)
@@ -208,7 +217,7 @@ arb_comp <- comp_pair_t_test(subset(adiv, Site == "Arbuckle"))
 dav_comp <- comp_pair_t_test(subset(adiv, Site == "Davis"))
 sac_comp <- comp_pair_t_test(subset(adiv, Site == "Sacramento"))
 
-comp_site_pair_t_test <- function(x) {
+comp_site_pair_wilcox_test <- function(x) {
   out_df = data.frame(Compartment1 = NA, Site1 = NA, Compartment2 = NA, Site2 = NA, p.value = NA)
   x$compsite <- factor(paste(x$Compartment, x$Site, sep = "_"))
   compsites <- levels(x$compsite)
@@ -220,7 +229,7 @@ comp_site_pair_t_test <- function(x) {
       compsite2 <- compsites[j]
       comp2 <- strsplit(compsite2, split = "_")[[1]][1]
       site2 <- strsplit(compsite2, split = "_")[[1]][2]
-      p.val <- t.test(exp(x[x$Compartment == comp1 & x$Site == site1,]$Shannon), exp(x[x$Compartment == comp2 & x$Site == site2,]$Shannon))$p.value
+      p.val <- wilcox.test(exp(x[x$Compartment == comp1 & x$Site == site1,]$Shannon), exp(x[x$Compartment == comp2 & x$Site == site2,]$Shannon))$p.value
       out_df <- rbind(out_df, c(comp1, site1, comp2, site2, p.val))
     }
   }
@@ -231,4 +240,5 @@ comp_site_pair_t_test <- function(x) {
   return(final)
 }
 
-comp_site_comparisons <- comp_site_pair_t_test(adiv)
+comp_site_comparisons <- comp_site_pair_wilcox_test(adiv)
+write.table(comp_site_comparisons, file = "comp_site_adiv.txt", quote = F, row.names = F, sep = "\t")
