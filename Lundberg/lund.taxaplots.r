@@ -1,8 +1,9 @@
-library(reshape)
+library(reshape2)
 library(ggplot2)
+library(scales)
 
 ### Set the working directory
-setwd("~/RICE/Publication/Data/FieldExp/")
+setwd("~/RMB/Publication/Data/FieldExp/")
 
 ### Load in the data
 field.counts <- read.table("field_otu_table.txt", header = T, row.names = 1)
@@ -12,6 +13,8 @@ field.tax <- read.table("field_tax.txt", header = T, row.names = 1)
 ### Format the map a bit
 field.map$Field <- NULL
 field.map$Run <- NULL
+field.map$BarcodeSequence <- NULL
+field.map$LinkerPrimerSequence <- NULL
 
 ############################################
 ## Phylum Plots
@@ -25,15 +28,34 @@ field.phy <- field.phy[,-1]
 top.15 <- names(head(sort(rowSums(field.phy), decreasing = T), 15))
 other <- colSums(field.phy[!row.names(field.phy)%in%top.15,])
 field.phy.15 <- rbind(field.phy[row.names(field.phy)%in%top.15,], other = other)
+field.phy.15.ratio <- field.phy.15 / colSums(field.phy.15)
+field.phy.15.ratio <- field.phy.15.ratio[,match(row.names(field.map), names(field.phy.15.ratio))]
 
 ### Melt into a long data frame for plotting
-field.phy.whole <- melt(cbind(field.map, t(field.phy.15)))
-field.phy.whole$Compartment <- factor(field.phy.whole$Compartment, levels = c("Rhizosphere", "Rhizoplane", "Endosphere"))
+field.phy.whole <- melt(cbind((field.map[,-2:-3])[,-4], t(field.phy.15.ratio)))
+field.phy.15.sum <- summarySE(field.phy.whole, groupvars = c("Site", "Compartment", "variable"),
+                           measurevar = "value")
+
+field.phy.15.sum$Compartment <- factor(field.phy.15.sum$Compartment, levels = c("Rhizosphere", "Rhizoplane", "Endosphere"))
+
 
 ### Define the colors
 colors <- c("mediumpurple3", "palegreen4", "skyblue1","darkorange", "blue","darkseagreen", "chocolate4","rosybrown1", "red", "gold", "dodgerblue4", "orange", "forestgreen", "grey", "orchid",  "grey50")
 
 ### Plot this thing
+ggplot(field.phy.15.sum, aes(x = variable, y = value, fill = variable)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = value - se, ymax = value + se), width = 0.2, position = position_dodge(0.9)) +
+  facet_grid(Compartment ~ Site) +
+  theme_bw() +
+  scale_fill_manual(values = colors) +
+  scale_y_continuous(label = percent, limits = c(0,1)) +
+  labs(x = "", y = "Percent of Microbiome") +
+  coord_flip() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        text = element_text(size = 20))
+
+
 ggplot(field.phy.whole, aes(x = Compartment, y = value, fill = variable)) +
   geom_bar(position = "fill", stat = "identity") +
   theme_bw() +
@@ -42,6 +64,67 @@ ggplot(field.phy.whole, aes(x = Compartment, y = value, fill = variable)) +
   labs(x = "", y = "Proportion of Counts", fill = "Phylum") +
   theme(text = element_text(size = 30), axis.text.y = element_text(size = 20), axis.text.x = element_text(angle = 40, hjust = 1)) +
   guides(fill = guide_legend(reverse = T))
+
+### Get pvalues for significant phyla abundance between compartment
+phy.pair.wilcox.test <- function(phyla_counts, groups, method = "BH") {
+  phyla_counts <- data.frame(phyla_counts)
+  taxa <- names(phyla_counts)
+  group_names <- as.character(unique(groups))
+  out.df <- data.frame(Taxa = NA, Group1 = NA, Group2 = NA, pval = NA, padj = NA)
+  
+  # Loop through taxa
+  for (i in 1:ncol(phyla_counts)) {
+    tax <- taxa[i]
+    tax.counts <- phyla_counts[,i]
+    temp.df <- data.frame(Taxa = NA, Group1 = NA, Group2 = NA, pval = NA)
+    for (j in 1:length(group_names)) {
+      group1 <- group_names[j]
+      group1.counts <- as.numeric(tax.counts[groups == group1])
+      #print(c(length(group1.counts), group1))
+      for (k in 1:length(group_names)) {
+        group2 <- group_names[k]
+        group2.counts <- as.numeric(tax.counts[groups == group2])
+        #print(c(length(group1.counts), length(group2.counts)))
+        p.val <- wilcox.test(group1.counts, group2.counts)$p.value
+        temp.df <- rbind(temp.df, c(tax, group1, group2, p.val))
+      }
+    }
+    temp.df <- remove.dup(temp.df)
+    temp.df <- temp.df[complete.cases(temp.df),]
+    temp.df <- temp.df[temp.df$Group1 != temp.df$Group2,]
+    #print(temp.df)
+    temp.df$padj <- p.adjust(temp.df$pval, method = method)
+    out.df <- rbind(out.df, temp.df)
+  }
+  out.df <- out.df[complete.cases(out.df),]
+  out.df <- remove.dup(out.df)
+  return(out.df)
+}
+
+field.phy2 <- t(field.phy[,match(row.names(field.map), names(field.phy))])
+bbp1.phy <- field.phy2[match(row.names(subset(field.map, Site == "BB P1")), row.names(field.phy2)),]
+bbp4.phy <- field.phy2[match(row.names(subset(field.map, Site == "BB P4")), row.names(field.phy2)),]
+d18.phy <- field.phy2[match(row.names(subset(field.map, Site == "Ditaler 18")), row.names(field.phy2)),]
+d19.phy <- field.phy2[match(row.names(subset(field.map, Site == "Ditaler 19")), row.names(field.phy2)),]
+dsrr.phy <- field.phy2[match(row.names(subset(field.map, Site == "DS RR")), row.names(field.phy2)),]
+scheidec.phy <- field.phy2[match(row.names(subset(field.map, Site == "Scheidec")), row.names(field.phy2)),]
+sft.phy <- field.phy2[match(row.names(subset(field.map, Site == "SFT 20 A")), row.names(field.phy2)),]
+spoon.phy <- field.phy2[match(row.names(subset(field.map, Site == "Spooner Airstrip")), row.names(field.phy2)),]
+
+bb1.test <- cbind(phy.pair.wilcox.test(phyla_counts = bbp1.phy, groups = subset(field.map, Site == "BB P1")$Compartment), Site = "BB P1")
+bb4.test <- cbind(phy.pair.wilcox.test(phyla_counts = bbp4.phy, groups = subset(field.map, Site == "BB P4")$Compartment), Site = "BB P4")
+d18.test <- cbind(phy.pair.wilcox.test(phyla_counts = d18.phy, groups = subset(field.map, Site == "Ditaler 18")$Compartment), Site = "Ditaler 18")
+d19.test <- cbind(phy.pair.wilcox.test(phyla_counts = d19.phy, groups = subset(field.map, Site == "Ditaler 19")$Compartment), Site = "Ditaler 19")
+dsrr.test <- cbind(phy.pair.wilcox.test(phyla_counts = dsrr.phy, groups = subset(field.map, Site == "DS RR")$Compartment), Site = "DS RR")
+scheidec.test <- cbind(phy.pair.wilcox.test(phyla_counts = scheidec.phy, groups = subset(field.map, Site == "Scheidec")$Compartment), Site = "Scheidec")
+sft.test <- cbind(phy.pair.wilcox.test(phyla_counts = sft.phy, groups = subset(field.map, Site == "SFT 20 A")$Compartment), Site = "SFT 20 A")
+spoon.test <- cbind(phy.pair.wilcox.test(phyla_counts = spoon.phy, groups = subset(field.map, Site == "Spooner Airstrip")$Compartment), Site = "Spooner Airstrip")
+
+
+field.phy.w.tests <- rbind(bb1.test, bb4.test, d18.test, d19.test,
+                           dsrr.test, scheidec.test, sft.test, spoon.test)
+
+write.table(field.phy.w.tests, file = "comp_site_phyla_wilcox.txt", row.names = F, sep = "\t", quote = F) 
 
 ### Plot Proteobacterial classes
 prot.tax <- subset(field.tax, Phylum == "Proteobacteria")

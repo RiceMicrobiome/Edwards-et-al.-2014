@@ -1,6 +1,7 @@
 library(reshape2)
 library(ggplot2)
 library(vegan)
+library(scales)
 
 ### Set the working directory
 setwd("~/RMB/Publication/Data/GreenhouseExp/")
@@ -85,6 +86,24 @@ ggplot(phyla.comp.whole, aes(x = Taxa, y = -log(padj), color = Site)) +
 top.15 <- names(head(sort(rowSums(gh.phy), decreasing = T), 15))
 other <- colSums(gh.phy[!row.names(gh.phy)%in%top.15,])
 gh.phy.15 <- rbind(gh.phy[row.names(gh.phy)%in%top.15,], other = other)
+gh.phy.15.prop <- gh.phy.15 / colSums(gh.phy.15)
+gh.phy.15.long <- melt(cbind(gh.map, t(gh.phy.15.prop)))
+
+gh.phy.15.sum <- summarySE(subset(gh.phy.15.long, Compartment != "Bulk Soil"), groupvars = c("Site", "Compartment", "variable"),
+                          measurevar = "value")
+
+
+ggplot(gh.phy.15.sum, aes(variable, value, fill = variable)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = value - se, ymax = value + se), width = 0.2) +
+  facet_grid(Site ~ Compartment) +
+  theme_bw() +
+  scale_fill_manual(values = colors) +
+  scale_y_continuous(label = percent, limits = c(0,1)) +
+  labs(x = "", y = "Percent of Microbiome") +
+  coord_flip() +
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(),
+        text = element_text(size = 20))
 
 ### Melt into a long data frame for plotting
 gh.phy.whole <- melt(cbind(gh.map, t(gh.phy.15)))

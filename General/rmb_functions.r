@@ -47,3 +47,6 @@ summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
   return(datac)
 }
 
+short <- function(x){
+  return(x[1:5,1:5])
+}
