@@ -131,16 +131,16 @@ ggplot(wuf.gh.rp.vectors, aes(x = Axis.1, y = Axis.2, color = site.comp, shape =
   theme_bw() +
   labs(x = "PCo1 (35.9%)", y = "PCo2 (15.5%)", color = "", shape = "") +
   theme(axis.title.x = element_text(size = 20), axis.title.y = element_text(size = 20), legend.key = element_blank())
-
-ggplot(wuf.gh.rp.vectors, aes(x = Axis.1, y = Axis.2, color = site.cult, shape = site.cult)) +
+wuf.gh.rp.vectors$Cultivar <- gsub("Nipponebare", "Nipponbare", wuf.gh.rp.vectors$Cultivar)
+wuf.gh.rp.vectors$Cultivar <- factor(wuf.gh.rp.vectors$Cultivar, levels = c("Glab_B", "Glab_E", "93-11", "IR50", "M104", "Nipponbare"))
+ggplot(wuf.gh.rp.vectors, aes(x = Axis.1, y = Axis.2, color = Cultivar, shape = Site)) +
   geom_hline(y = 0, alpha = 0.3) +
   geom_vline(x = 0, alpha = 0.3) +
-  geom_point(size = 7.5, alpha= 0.75) +
-  scale_color_manual(values = rep(cult.cols, 3)) +
-  scale_shape_manual(values = c(rep(16, 6), rep(17, 6), rep(15, 6))) +
-  theme_bw() +
-  labs(x = "PCo1 (35.9%)", y = "PCo2 (15.5%)", color = "", shape = "") +
-  theme(axis.title.x = element_text(size = 20), axis.title.y = element_text(size = 20), legend.key = element_blank())
+  geom_point(size = 9, alpha= 0.75) +
+  scale_color_manual(values = cult.cols) +
+  theme_classic() +
+  labs(x = "PCo1 (35.9%)", y = "PCo2 (15.5%)", color = "Cultivar", shape = "Soil Source") +
+  theme(text = element_text(size = 30), legend.key = element_blank())
 
 ggplot(wuf.gh.rp.vectors, aes(x = Axis.1, y = Axis.3, color = site.cult, shape = site.cult)) +
   geom_hline(y = 0, alpha = 0.3) +
@@ -182,15 +182,16 @@ ggplot(wuf.gh.e.vectors, aes(x = Axis.1, y = Axis.2, color = site.comp, shape = 
   labs(x = "PCo1 (55.2%)", y = "PCo2 (10.3%)", color = "", shape = "") +
   theme(axis.title.x = element_text(size = 20), axis.title.y = element_text(size = 20), legend.key = element_blank())
 
-ggplot(wuf.gh.e.vectors, aes(x = Axis.1, y = Axis.2, color = site.cult, shape = site.cult)) +
+wuf.gh.e.vectors$Cultivar <- gsub("Nipponebare", "Nipponbare", wuf.gh.e.vectors$Cultivar)
+wuf.gh.e.vectors$Cultivar <- factor(wuf.gh.e.vectors$Cultivar, levels = c("Glab_B", "Glab_E", "93-11", "IR50", "M104", "Nipponbare"))
+ggplot(wuf.gh.e.vectors, aes(x = Axis.1, y = Axis.2, color = Cultivar, shape = Site)) +
   geom_hline(y = 0, alpha = 0.3) +
   geom_vline(x = 0, alpha = 0.3) +
-  geom_point(size = 7.5, alpha= 0.75) +
-  scale_color_manual(values = rep(cult.cols, 3)) +
-  scale_shape_manual(values = c(rep(16, 7), rep(17, 7), rep(15, 7))) +
-  theme_bw() +
-  labs(x = "PCo1 (29.0%)", y = "PCo2 (21.9%)", color = "", shape = "") +
-  theme(axis.title.x = element_text(size = 20), axis.title.y = element_text(size = 20), legend.key = element_blank())
+  geom_point(size = 9, alpha= 0.75) +
+  scale_color_manual(values = cult.cols) +
+  theme_classic() +
+  labs(x = "PCo1 (29.0%)", y = "PCo2 (21.9%)", color = "Cultivar", shape = "Soil Source") +
+  theme(text = element_text(size = 30), legend.key = element_blank())
 
 ggplot(wuf.gh.e.vectors, aes(x = Axis.2, y = Axis.3, color = site.cult, shape = site.cult)) +
   geom_hline(y = 0, alpha = 0.3) +
