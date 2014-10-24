@@ -27,6 +27,7 @@ row.names(gh.phy) <- gh.phy[,1]
 gh.phy <- gh.phy[,-1]
 gh.phy.t <- t(gh.phy)
 gh.phy.t <- data.frame(gh.phy.t[match(row.names(gh.map), row.names(gh.phy.t)),])
+gh.phy.t.rat <- gh.phy.t / rowSums(gh.phy.t)
 
 ### Pairwise t.tests on phyla
 
@@ -34,23 +35,25 @@ phy.pair.wilcox.test <- function(phyla_counts, groups, method = "BH") {
   phyla_counts <- data.frame(phyla_counts)
   taxa <- names(phyla_counts)
   group_names <- as.character(unique(groups))
-  out.df <- data.frame(Taxa = NA, Group1 = NA, Group2 = NA, pval = NA, padj = NA)
+  out.df <- data.frame(Taxa = NA, Group1 = NA, Group1_Mean = NA, Group2 = NA, Group2_Mean = NA, pval = NA, padj = NA)
   
   # Loop through taxa
   for (i in 1:ncol(phyla_counts)) {
     tax <- taxa[i]
     tax.counts <- phyla_counts[,i]
-    temp.df <- data.frame(Taxa = NA, Group1 = NA, Group2 = NA, pval = NA)
+    temp.df <- data.frame(Taxa = NA, Group1 = NA, Group1_Mean = NA, Group2 = NA, Group2_Mean = NA, pval = NA)
     for (j in 1:length(group_names)) {
       group1 <- group_names[j]
       group1.counts <- as.numeric(tax.counts[groups == group1])
+      group1.mean <- mean(group1.counts)
       #print(c(length(group1.counts), group1))
       for (k in 1:length(group_names)) {
         group2 <- group_names[k]
         group2.counts <- as.numeric(tax.counts[groups == group2])
+        group2.mean <- mean(group2.counts)
         #print(c(length(group1.counts), length(group2.counts)))
         p.val <- wilcox.test(group1.counts, group2.counts)$p.value
-        temp.df <- rbind(temp.df, c(tax, group1, group2, p.val))
+        temp.df <- rbind(temp.df, c(tax, group1, group1.mean, group2, group2.mean, p.val))
       }
     }
     temp.df <- remove.dup(temp.df)
@@ -65,16 +68,17 @@ phy.pair.wilcox.test <- function(phyla_counts, groups, method = "BH") {
   return(out.df)
 }
 
-gh.phy.t.davis <- gh.phy.t[match(row.names(subset(gh.map, Site == "Davis")), row.names(gh.phy.t)),]
-gh.phy.t.arbuckle <- gh.phy.t[match(row.names(subset(gh.map, Site == "Arbuckle")), row.names(gh.phy.t)),]
-gh.phy.t.sac <- gh.phy.t[match(row.names(subset(gh.map, Site == "Sacramento")), row.names(gh.phy.t)),]
+
+gh.phy.t.davis <- gh.phy.t.rat[match(row.names(subset(gh.map, Site == "Davis")), row.names(gh.phy.t.rat)),]
+gh.phy.t.arbuckle <- gh.phy.t.rat[match(row.names(subset(gh.map, Site == "Arbuckle")), row.names(gh.phy.t.rat)),]
+gh.phy.t.sac <- gh.phy.t.rat[match(row.names(subset(gh.map, Site == "Sacramento")), row.names(gh.phy.t.rat)),]
 
 phyla.comp.dav <- cbind(phy.pair.wilcox.test(gh.phy.t.davis, subset(gh.map, Site == "Davis")$Compartment), Site = "Davis")
 phyla.comp.arb <- cbind(phy.pair.wilcox.test(gh.phy.t.arbuckle, subset(gh.map, Site == "Arbuckle")$Compartment), Site = "Arbuckle")
 phyla.comp.sac <- cbind(phy.pair.wilcox.test(gh.phy.t.sac, subset(gh.map, Site == "Sacramento")$Compartment), Site = "Sacramento")
 
 phyla.comp.whole <- rbind(phyla.comp.dav, phyla.comp.arb, phyla.comp.sac)
-write.table(phyla.sig.comp.whole, file = "~/RMB/Publication/Data/GreenhouseExp/sig_phyla.txt", sep = "\t", quote = F)
+write.table(phyla.comp.whole, file = "~/RMB/Publication/Data/GreenhouseExp/phyla_wilcox.txt", sep = "\t", quote = F, row.names = F)
 
 ggplot(phyla.comp.whole, aes(x = Taxa, y = -log(padj), color = Site)) +
   geom_point() +
@@ -237,19 +241,21 @@ dav_comp <- comp_pair_t_test(subset(adiv, Site == "Davis"))
 sac_comp <- comp_pair_t_test(subset(adiv, Site == "Sacramento"))
 
 comp_site_pair_wilcox_test <- function(x) {
-  out_df = data.frame(Compartment1 = NA, Site1 = NA, Compartment2 = NA, Site2 = NA, p.value = NA)
+  out_df = data.frame(Compartment1 = NA, Site1 = NA, Compartment2 = NA, Site2 = NA, Group1_Mean = NA, Group2_Mean = NA, p.value = NA)
   x$compsite <- factor(paste(x$Compartment, x$Site, sep = "_"))
   compsites <- levels(x$compsite)
   for (i in 1:length(compsites)) {
     compsite1 <- compsites[i]
     comp1 <- strsplit(compsite1, split = "_")[[1]][1]
     site1 <- strsplit(compsite1, split = "_")[[1]][2]
+    mean1 <- mean(exp(x[x$Compartment == comp1 & x$Site == site1,]$Shannon))
     for(j in 1:length(compsites)) {
       compsite2 <- compsites[j]
       comp2 <- strsplit(compsite2, split = "_")[[1]][1]
       site2 <- strsplit(compsite2, split = "_")[[1]][2]
+      mean2 <- mean(exp(x[x$Compartment == comp2 & x$Site == site2,]$Shannon))
       p.val <- wilcox.test(exp(x[x$Compartment == comp1 & x$Site == site1,]$Shannon), exp(x[x$Compartment == comp2 & x$Site == site2,]$Shannon))$p.value
-      out_df <- rbind(out_df, c(comp1, site1, comp2, site2, p.val))
+      out_df <- rbind(out_df, c(comp1, site1, comp2, site2, mean1, mean2, p.val))
     }
   }
   out_df <- out_df[complete.cases(out_df),]

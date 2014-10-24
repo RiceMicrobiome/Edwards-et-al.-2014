@@ -16,6 +16,8 @@ field.map$Run <- NULL
 field.map$BarcodeSequence <- NULL
 field.map$LinkerPrimerSequence <- NULL
 
+field.counts <- field.counts[,match(row.names(field.map), colnames(field.counts))]
+
 ############################################
 ## Phylum Plots
 ############################################
@@ -23,6 +25,7 @@ field.map$LinkerPrimerSequence <- NULL
 field.phy <- aggregate(field.counts, data.frame(field.tax$Phylum), sum)
 row.names(field.phy) <- field.phy[,1]
 field.phy <- field.phy[,-1]
+field.phy.rat <- field.phy / colSums(field.phy)
 
 ### Extract the top15 highest represented phyla
 top.15 <- names(head(sort(rowSums(field.phy), decreasing = T), 15))
@@ -70,23 +73,25 @@ phy.pair.wilcox.test <- function(phyla_counts, groups, method = "BH") {
   phyla_counts <- data.frame(phyla_counts)
   taxa <- names(phyla_counts)
   group_names <- as.character(unique(groups))
-  out.df <- data.frame(Taxa = NA, Group1 = NA, Group2 = NA, pval = NA, padj = NA)
+  out.df <- data.frame(Taxa = NA, Group1 = NA, Group1_Mean = NA, Group2 = NA, Group2_Mean = NA, pval = NA, padj = NA)
   
   # Loop through taxa
   for (i in 1:ncol(phyla_counts)) {
     tax <- taxa[i]
     tax.counts <- phyla_counts[,i]
-    temp.df <- data.frame(Taxa = NA, Group1 = NA, Group2 = NA, pval = NA)
+    temp.df <- data.frame(Taxa = NA, Group1 = NA, Group1_Mean = NA, Group2 = NA, Group2_Mean = NA, pval = NA)
     for (j in 1:length(group_names)) {
       group1 <- group_names[j]
       group1.counts <- as.numeric(tax.counts[groups == group1])
+      group1.mean <- mean(group1.counts)
       #print(c(length(group1.counts), group1))
       for (k in 1:length(group_names)) {
         group2 <- group_names[k]
         group2.counts <- as.numeric(tax.counts[groups == group2])
+        group2.mean <- mean(group2.counts)
         #print(c(length(group1.counts), length(group2.counts)))
         p.val <- wilcox.test(group1.counts, group2.counts)$p.value
-        temp.df <- rbind(temp.df, c(tax, group1, group2, p.val))
+        temp.df <- rbind(temp.df, c(tax, group1, group1.mean, group2, group2.mean, p.val))
       }
     }
     temp.df <- remove.dup(temp.df)
@@ -100,8 +105,7 @@ phy.pair.wilcox.test <- function(phyla_counts, groups, method = "BH") {
   out.df <- remove.dup(out.df)
   return(out.df)
 }
-
-field.phy2 <- t(field.phy[,match(row.names(field.map), names(field.phy))])
+field.phy2 <- t(field.phy.rat[,match(row.names(field.map), names(field.phy.rat))])
 bbp1.phy <- field.phy2[match(row.names(subset(field.map, Site == "BB P1")), row.names(field.phy2)),]
 bbp4.phy <- field.phy2[match(row.names(subset(field.map, Site == "BB P4")), row.names(field.phy2)),]
 d18.phy <- field.phy2[match(row.names(subset(field.map, Site == "Ditaler 18")), row.names(field.phy2)),]
@@ -123,6 +127,8 @@ spoon.test <- cbind(phy.pair.wilcox.test(phyla_counts = spoon.phy, groups = subs
 
 field.phy.w.tests <- rbind(bb1.test, bb4.test, d18.test, d19.test,
                            dsrr.test, scheidec.test, sft.test, spoon.test)
+field.phy.w.tests$Group1_Mean <- as.numeric(as.character(field.phy.w.tests$Group1_Mean)) * 100
+field.phy.w.tests$Group2_Mean <- as.numeric(as.character(field.phy.w.tests$Group2_Mean)) * 100
 
 write.table(field.phy.w.tests, file = "comp_site_phyla_wilcox.txt", row.names = F, sep = "\t", quote = F) 
 
@@ -144,3 +150,33 @@ ggplot(field.prot.whole, aes(x = Compartment, y = value, fill = variable)) +
   labs(x = "", y = "Proportion of Counts", fill = "Phylum") +
   theme(text = element_text(size = 20), axis.text.y = element_text(size = 10), axis.text.x = element_text(angle = 30, hjust = 1)) +
   guides(fill = guide_legend(reverse = T))
+
+### Alpha Diversity
+comp_site_pair_wilcox_test <- function(x) {
+  out_df = data.frame(Compartment1 = NA, Site1 = NA, Compartment2 = NA, Site2 = NA, Group1_Mean = NA, Group2_Mean = NA, p.value = NA)
+  x$compsite <- factor(paste(x$Compartment, x$Site, sep = "_"))
+  compsites <- levels(x$compsite)
+  for (i in 1:length(compsites)) {
+    compsite1 <- compsites[i]
+    comp1 <- strsplit(compsite1, split = "_")[[1]][1]
+    site1 <- strsplit(compsite1, split = "_")[[1]][2]
+    mean1 <- mean(exp(x[x$Compartment == comp1 & x$Site == site1,]$Shannon))
+    for(j in 1:length(compsites)) {
+      compsite2 <- compsites[j]
+      comp2 <- strsplit(compsite2, split = "_")[[1]][1]
+      site2 <- strsplit(compsite2, split = "_")[[1]][2]
+      mean2 <- mean(exp(x[x$Compartment == comp2 & x$Site == site2,]$Shannon))
+      p.val <- wilcox.test(exp(x[x$Compartment == comp1 & x$Site == site1,]$Shannon), exp(x[x$Compartment == comp2 & x$Site == site2,]$Shannon))$p.value
+      out_df <- rbind(out_df, c(comp1, site1, comp2, site2, mean1, mean2, p.val))
+    }
+  }
+  out_df <- out_df[complete.cases(out_df),]
+  final <- remove.dup(out_df)
+  final <- final[paste(final$Compartment1, final$Site1) != paste(final$Compartment2, final$Site2),]
+  final <- cbind(final, padj = p.adjust(final$p.value, method = "BH"))
+  return(final)
+}
+
+field.adiv <- cbind(field.map, Shannon = diversity(t(field.counts)))
+comp_site_comparisons <- comp_site_pair_wilcox_test(field.adiv)
+write.table(comp_site_comparisons, file = "comp_site_adiv_wilcox.txt", sep = "\t", quote = F, row.names = F)
