@@ -17,7 +17,7 @@ gh.map$BarcodeSequence <- NULL
 gh.map$LinkerPrimerSequence <- NULL
 gh.map$Run <- NULL
 gh.map$Compartment <- factor(gh.map$Compartment, levels = c("Bulk Soil", "Rhizosphere", "Rhizoplane", "Endosphere"))
-
+gh.map$Cultivar <- gsub("Nipponebare", "Nipponbare", gh.map$Cultivar)
 ############################################
 ## Phylum Plots
 ############################################
@@ -189,7 +189,6 @@ ggplot(gh.counts.map, aes(x = Site, y = Otu4356171, fill = Compartment)) +
 
 adiv <- cbind(gh.map, Shannon = diversity(t(gh.counts)))
 adiv$Cultivar <- gsub("_", " ", adiv$Cultivar)
-adiv$Cultivar <- gsub("Nipponebare", "Nipponbare", adiv$Cultivar)
 adiv$Cultivar <- factor(adiv$Cultivar, levels = c("Glab B", "Glab E", "93-11", "IR50", "M104", "Nipponbare","Soil"))
 cult.cols <- c("#006600", "#B2D1B2", "#FF9933", "#FFD6AD", "#660066", "#D1B2D1")
 ggplot(subset(adiv, Compartment == "Rhizosphere"), aes(x = Cultivar, y = exp(Shannon), fill = Cultivar)) +
@@ -199,6 +198,23 @@ ggplot(subset(adiv, Compartment == "Rhizosphere"), aes(x = Cultivar, y = exp(Sha
   theme_bw() +
   labs(x = "", y = "Effective Species") +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), text = element_text(size = 30), legend.key = element_blank())
+
+ggplot(subset(adiv, Compartment == "Rhizoplane"), aes(x = Cultivar, y = exp(Shannon), fill = Cultivar)) +
+  geom_boxplot(outlier.size = 1) +
+  scale_fill_manual(values = cult.cols) +
+  facet_grid(.~Site) +
+  theme_bw() +
+  labs(x = "", y = "Effective Species") +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), text = element_text(size = 30), legend.key = element_blank())
+
+ggplot(subset(adiv, Compartment == "Endosphere"), aes(x = Cultivar, y = exp(Shannon), fill = Cultivar)) +
+  geom_boxplot(outlier.size = 1) +
+  scale_fill_manual(values = cult.cols) +
+  facet_grid(.~Site) +
+  theme_bw() +
+  labs(x = "", y = "Effective Species") +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), text = element_text(size = 30), legend.key = element_blank())
+
 
 ggplot(adiv, aes(x = Cultivar, y = exp(Shannon), fill = Cultivar)) +
   geom_boxplot(outlier.size = 1) +
