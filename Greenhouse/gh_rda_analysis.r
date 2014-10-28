@@ -149,4 +149,117 @@ ggplot(uuf.cap.geno.axes, aes(x = CAP1, y = CAP2, color = Cultivar)) +
   theme_classic() +
   labs(x = "Constrained PCo1 (32.8%)", y = "Constrained PCo2 (19.3%)") +
   scale_color_manual(values = cult.cols) +
-  theme(text = element_text(size = 30))
+  theme(text = element_text(size = 30)) 
+
+### Explore genotype effects in each compartment separately
+## Rhizosphere
+gh.map.rs <- subset(gh.map, Compartment == "Rhizosphere")
+
+# Weighted
+wuf.rs <- gh.wuf[match(row.names(gh.map.rs), colnames(gh.wuf)), match(row.names(gh.map.rs), colnames(gh.wuf))]
+wuf.cap.geno.rs <- capscale(as.dist(wuf.rs) ~ Cultivar + Condition(Site + Run), data = gh.map.rs, add = T)
+anova(wuf.cap.geno.rs)
+wuf.cap.geno.rs.axes <- data.frame(cbind(gh.map.rs, scores(wuf.cap.geno.rs)$sites))
+wuf.cap.geno.rs.axes$Cultivar <- factor(wuf.cap.geno.rs.axes$Cultivar, levels = c("Glab_B", "Glab_E", "93-11", "IR50", "M104", "Nipponbare"))
+percent_explained <- wuf.cap.geno.rs$CCA$eig / sum(wuf.cap.geno.rs$CCA$eig) * 100
+cult.cols <- c("#006600", "#B2D1B2", "#FF9933", "#FFD6AD", "#660066", "#D1B2D1")
+ggplot(wuf.cap.geno.rs.axes, aes(x = CAP1, y = CAP2, color = Cultivar)) +
+  geom_vline(x = 0, alpha = 0.9) +
+  geom_hline(y = 0, alpha = 0.9) +
+  geom_point(size = 9, alpha = 0.9) +
+  theme_classic() +
+  labs(x = "Constrained PCo1 (79.4%)", y = "Constrained PCo2 (9.4%)") +
+  scale_color_manual(values = cult.cols) +
+  theme(text = element_text(size = 30)) 
+
+# Unweighted
+uuf.rs <- gh.uuf[match(row.names(gh.map.rs), colnames(gh.uuf)), match(row.names(gh.map.rs), colnames(gh.uuf))]
+uuf.cap.geno.rs <- capscale(as.dist(uuf.rs) ~ Cultivar + Condition(Site + Run), data = gh.map.rs, add = T)
+anova(uuf.cap.geno.rs)
+uuf.cap.geno.rs.axes <- data.frame(cbind(gh.map.rs, scores(uuf.cap.geno.rs)$sites))
+uuf.cap.geno.rs.axes$Cultivar <- factor(uuf.cap.geno.rs.axes$Cultivar, levels = c("Glab_B", "Glab_E", "93-11", "IR50", "M104", "Nipponbare"))
+percent_explained <- uuf.cap.geno.rs$CCA$eig / sum(uuf.cap.geno.rs$CCA$eig) * 100
+cult.cols <- c("#006600", "#B2D1B2", "#FF9933", "#FFD6AD", "#660066", "#D1B2D1")
+ggplot(uuf.cap.geno.rs.axes, aes(x = CAP1, y = CAP2, color = Cultivar)) +
+  geom_vline(x = 0, alpha = 0.9) +
+  geom_hline(y = 0, alpha = 0.9) +
+  geom_point(size = 9, alpha = 0.9) +
+  theme_classic() +
+  labs(x = "Constrained PCo1 (34.0%)", y = "Constrained PCo2 (19.0%)") +
+  scale_color_manual(values = cult.cols) +
+  theme(text = element_text(size = 30)) 
+
+## Rhizosphere
+gh.map.rp <- subset(gh.map, Compartment == "Rhizoplane")
+
+# Weighted
+wuf.rp <- gh.wuf[match(row.names(gh.map.rp), colnames(gh.wuf)), match(row.names(gh.map.rp), colnames(gh.wuf))]
+wuf.cap.geno.rp <- capscale(as.dist(wuf.rp) ~ Cultivar + Condition(Site + Run), data = gh.map.rp, add = T)
+anova(wuf.cap.geno.rp)
+wuf.cap.geno.rp.axes <- data.frame(cbind(gh.map.rp, scores(wuf.cap.geno.rp)$sites))
+wuf.cap.geno.rp.axes$Cultivar <- factor(wuf.cap.geno.rp.axes$Cultivar, levels = c("Glab_B", "Glab_E", "93-11", "IR50", "M104", "Nipponbare"))
+percent_explained <- wuf.cap.geno.rp$CCA$eig / sum(wuf.cap.geno.rp$CCA$eig) * 100
+cult.cols <- c("#006600", "#B2D1B2", "#FF9933", "#FFD6AD", "#660066", "#D1B2D1")
+ggplot(wuf.cap.geno.rp.axes, aes(x = CAP1, y = CAP2, color = Cultivar)) +
+  geom_vline(x = 0, alpha = 0.9) +
+  geom_hline(y = 0, alpha = 0.9) +
+  geom_point(size = 9, alpha = 0.9) +
+  theme_classic() +
+  labs(x = "Constrained PCo1 (48.4%)", y = "Constrained PCo2 (19.6%)") +
+  scale_color_manual(values = cult.cols) +
+  theme(text = element_text(size = 30)) 
+
+# Unweighted
+uuf.rp <- gh.uuf[match(row.names(gh.map.rp), colnames(gh.uuf)), match(row.names(gh.map.rp), colnames(gh.uuf))]
+uuf.cap.geno.rp <- capscale(as.dist(uuf.rp) ~ Cultivar + Condition(Site + Run), data = gh.map.rp, add = T)
+anova(uuf.cap.geno.rp)
+uuf.cap.geno.rp.axes <- data.frame(cbind(gh.map.rp, scores(uuf.cap.geno.rp)$sites))
+uuf.cap.geno.rp.axes$Cultivar <- factor(uuf.cap.geno.rp.axes$Cultivar, levels = c("Glab_B", "Glab_E", "93-11", "IR50", "M104", "Nipponbare"))
+percent_explained <- uuf.cap.geno.rp$CCA$eig / sum(uuf.cap.geno.rp$CCA$eig) * 100
+cult.cols <- c("#006600", "#B2D1B2", "#FF9933", "#FFD6AD", "#660066", "#D1B2D1")
+ggplot(uuf.cap.geno.rp.axes, aes(x = CAP1, y = CAP2, color = Cultivar)) +
+  geom_vline(x = 0, alpha = 0.9) +
+  geom_hline(y = 0, alpha = 0.9) +
+  geom_point(size = 9, alpha = 0.9) +
+  theme_classic() +
+  labs(x = "Constrained PCo1 (25.1%)", y = "Constrained PCo2 (20.7%)") +
+  scale_color_manual(values = cult.cols) +
+  theme(text = element_text(size = 30)) 
+
+## Endosphere
+gh.map.e <- subset(gh.map, Compartment == "Endosphere")
+
+# Weighted
+wuf.e <- gh.wuf[match(row.names(gh.map.e), colnames(gh.wuf)), match(row.names(gh.map.e), colnames(gh.wuf))]
+wuf.cap.geno.e <- capscale(as.dist(wuf.e) ~ Cultivar + Condition(Site + Run), data = gh.map.e, add = T)
+anova(wuf.cap.geno.e)
+wuf.cap.geno.e.axes <- data.frame(cbind(gh.map.e, scores(wuf.cap.geno.e)$sites))
+wuf.cap.geno.e.axes$Cultivar <- factor(wuf.cap.geno.e.axes$Cultivar, levels = c("Glab_B", "Glab_E", "93-11", "IR50", "M104", "Nipponbare"))
+percent_explained <- wuf.cap.geno.e$CCA$eig / sum(wuf.cap.geno.e$CCA$eig) * 100
+cult.cols <- c("#006600", "#B2D1B2", "#FF9933", "#FFD6AD", "#660066", "#D1B2D1")
+ggplot(wuf.cap.geno.e.axes, aes(x = CAP1, y = CAP2, color = Cultivar)) +
+  geom_vline(x = 0, alpha = 0.9) +
+  geom_hline(y = 0, alpha = 0.9) +
+  geom_point(size = 9, alpha = 0.9) +
+  theme_classic() +
+  labs(x = "Constrained PCo1 (41.5%)", y = "Constrained PCo2 (23.6%)") +
+  scale_color_manual(values = cult.cols) +
+  theme(text = element_text(size = 30)) 
+
+# Unweighted
+uuf.e <- gh.uuf[match(row.names(gh.map.e), colnames(gh.uuf)), match(row.names(gh.map.e), colnames(gh.uuf))]
+uuf.cap.geno.e <- capscale(as.dist(uuf.e) ~ Cultivar + Condition(Site + Run), data = gh.map.e, add = T)
+anova(uuf.cap.geno.e)
+uuf.cap.geno.e.axes <- data.frame(cbind(gh.map.e, scores(uuf.cap.geno.e)$sites))
+uuf.cap.geno.e.axes$Cultivar <- factor(uuf.cap.geno.e.axes$Cultivar, levels = c("Glab_B", "Glab_E", "93-11", "IR50", "M104", "Nipponbare"))
+percent_explained <- uuf.cap.geno.e$CCA$eig / sum(uuf.cap.geno.e$CCA$eig) * 100
+cult.cols <- c("#006600", "#B2D1B2", "#FF9933", "#FFD6AD", "#660066", "#D1B2D1")
+ggplot(uuf.cap.geno.e.axes, aes(x = CAP1, y = CAP2, color = Cultivar)) +
+  geom_vline(x = 0, alpha = 0.9) +
+  geom_hline(y = 0, alpha = 0.9) +
+  geom_point(size = 9, alpha = 0.9) +
+  theme_classic() +
+  labs(x = "Constrained PCo1 (30.2%)", y = "Constrained PCo2 (21.1%)") +
+  scale_color_manual(values = cult.cols) +
+  theme(text = element_text(size = 30)) 
+

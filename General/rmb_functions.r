@@ -50,3 +50,8 @@ summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
 short <- function(x){
   return(x[1:5,1:5])
 }
+
+cap_pv <- function(CAP_obj){
+  vars <- anova(CAP_obj)$Var
+  return((vars / sum(vars) * 100)[1])
+}
