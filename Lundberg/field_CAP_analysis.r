@@ -85,13 +85,15 @@ ggplot(uuf.cap.site.axes, aes(x = CAP1, y = CAP2, color = factor(lat))) +
   labs(x = "Constrained PCo1 (47.4%)", y = "Constrained PCo2 (19.8%)", color = "Latitude") +
   theme(text = element_text(size = 30))
 
+#######!!!!!!!!!!!!
+# This doesn't work
 ## Cultivation
 # Weighted
 wuf.cap.cult <- capscale(as.dist(field.wuf) ~ Cultivation + Condition(Compartment + Site + Run), data = field.map, add = T)
 anova(wuf.cap.cult)
-wuf.cap.cult.axes <- data.frame(cbind(field.map, scores(wuf.cap.site)$sites))
+wuf.cap.cult.axes <- data.frame(cbind(field.map, scores(wuf.cap.cult)$sites))
 percent_explained <- wuf.cap.cult$CCA$eig / sum(wuf.cap.cult$CCA$eig) * 100
-ggplot(wuf.cap.cult.axes, aes(x = CAP1, y = CAP2, color = Cultivation)) +
+ggplot(wuf.cap.cult.axes, aes(x = MDS1, y = MDS2, color = Cultivation)) +
   geom_vline(x = 0, alpha = 0.9) +
   geom_hline(y = 0, alpha = 0.9) +
   geom_point(size = 9, alpha = 0.9) +

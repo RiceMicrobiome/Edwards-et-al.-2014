@@ -189,7 +189,7 @@ ggplot(uuf.cap.geno.rs.axes, aes(x = CAP1, y = CAP2, color = Cultivar)) +
   scale_color_manual(values = cult.cols) +
   theme(text = element_text(size = 30)) 
 
-## Rhizosphere
+## Rhizoplane
 gh.map.rp <- subset(gh.map, Compartment == "Rhizoplane")
 
 # Weighted
