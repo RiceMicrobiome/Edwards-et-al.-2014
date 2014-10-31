@@ -14,7 +14,7 @@ field.wuf <- read.table("../FieldUniFrac/weighted.field.unifrac", header = T, ro
 field.wuf <- field.wuf[match(row.names(field.map), row.names(field.wuf)), match(row.names(field.map), colnames(field.wuf))]
 
 field.uuf <- read.table("../FieldUniFrac/unweighted.field.unifrac", header = T, row.names = 1)
-field.wuf <- field.uuf[match(row.names(field.map), row.names(field.uuf)), match(row.names(field.map), colnames(field.uuf))]
+field.uuf <- field.uuf[match(row.names(field.map), row.names(field.uuf)), match(row.names(field.map), colnames(field.uuf))]
 
 ## Examine Compartment Separation
 # Weighted
@@ -56,7 +56,7 @@ ggplot(uuf.cap.comp.axes, aes(x = CAP1, y = CAP2, color = Compartment)) +
 wuf.cap.site <- capscale(as.dist(field.wuf) ~ Site + Condition(Compartment + Cultivation + Run), data = field.map, add = T)
 anova(wuf.cap.site)
 var_get(wuf.cap.site)
-wuf.cap.site.axes <- data.frame(cbind(field.map, scores(wuf.cap.site)$sites))
+wuf.cap.site.axes <- data.frame(cbind(field.map, wuf.cap.site$CCA$wa))
 wuf.cap.site.axes$siteartment <- factor(wuf.cap.site.axes$Site, , levels = c("Bulk Soil", "Rhizosphere", "Rhizoplane", "Endosphere"))
 percent_explained <- wuf.cap.site$CCA$eig / sum(wuf.cap.site$CCA$eig) * 100
 site.col <- c("#984EA3", "#4DAF4A", "#377EB8")
@@ -66,6 +66,15 @@ ggplot(wuf.cap.site.axes, aes(x = CAP1, y = CAP2, color = factor(lat))) +
   geom_point(size = 9, alpha = 0.9) +
   theme_classic() +
   scale_color_manual(values = brewer.pal(n = 10, "YlGnBu")[3:10]) +
+  labs(x = "Constrained PCo1 (53.6%)", y = "Constrained PCo2 (19.5%)", color = "Latitude") +
+  theme(text = element_text(size = 30))
+
+ggplot(wuf.cap.site.axes, aes(x = CAP2, y = CAP5, color = Cultivation)) +
+  geom_vline(x = 0, alpha = 0.9) +
+  geom_hline(y = 0, alpha = 0.9) +
+  geom_point(size = 9, alpha = 0.9) +
+  theme_classic() +
+  scale_color_manual(values = c("brown4", "darkorange")) +
   labs(x = "Constrained PCo1 (53.6%)", y = "Constrained PCo2 (19.5%)", color = "Latitude") +
   theme(text = element_text(size = 30))
 
@@ -85,36 +94,35 @@ ggplot(uuf.cap.site.axes, aes(x = CAP1, y = CAP2, color = factor(lat))) +
   labs(x = "Constrained PCo1 (47.4%)", y = "Constrained PCo2 (19.8%)", color = "Latitude") +
   theme(text = element_text(size = 30))
 
-#######!!!!!!!!!!!!
-# This doesn't work
+
 ## Cultivation
 # Weighted
-wuf.cap.cult <- capscale(as.dist(field.wuf) ~ Cultivation + Condition(Compartment + Site + Run), data = field.map, add = T)
+wuf.cap.cult <- capscale(as.dist(field.wuf) ~ Cultivation + Condition(Compartment + Run), data = field.map, add = T)
 anova(wuf.cap.cult)
 wuf.cap.cult.axes <- data.frame(cbind(field.map, scores(wuf.cap.cult)$sites))
 percent_explained <- wuf.cap.cult$CCA$eig / sum(wuf.cap.cult$CCA$eig) * 100
-ggplot(wuf.cap.cult.axes, aes(x = MDS1, y = MDS2, color = Cultivation)) +
-  geom_vline(x = 0, alpha = 0.9) +
-  geom_hline(y = 0, alpha = 0.9) +
-  geom_point(size = 9, alpha = 0.9) +
+ggplot(wuf.cap.cult.axes, aes(x = Cultivation, y = CAP1, fill = Cultivation)) +
+  geom_jitter(position = position_jitter(width = .2), alpha = 0.5) +
+  geom_boxplot(alpha = 0.75, outlier.size = 0, width = 0.7) +
   theme_classic() +
-  scale_color_manual(values = c("brown4", "darkorange")) +
-  labs(x = "Constrained PCo1 (53.6%)", y = "Constrained PCo2 (19.5%)") +
-  theme(text = element_text(size = 30))
+  scale_fill_manual(values = c("brown4", "darkorange")) +
+  labs(y = "Constrained PCo1", x = "") +
+  theme(text = element_text(size = 30), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
 
 # Unweighted
-uuf.cap.cult <- capscale(as.dist(field.uuf) ~ Cultivation + Condition(Compartment + Site + Run), data = field.map, add = T)
+uuf.cap.cult <- capscale(as.dist(field.uuf) ~ Cultivation + Condition(Compartment + Run), data = field.map, add = T)
 anova(uuf.cap.cult)
-uuf.cap.cult.axes <- data.frame(cbind(field.map, uuf.cap.site$CCA$wa))
+uuf.cap.cult.axes <- data.frame(cbind(field.map, uuf.cap.cult$CCA$wa))
 percent_explained <- uuf.cap.cult$CCA$eig / sum(uuf.cap.cult$CCA$eig) * 100
-ggplot(uuf.cap.cult.axes, aes(x = CAP1, y = CAP2, color = Cultivation)) +
-  geom_vline(x = 0, alpha = 0.9) +
-  geom_hline(y = 0, alpha = 0.9) +
-  geom_point(size = 9, alpha = 0.9) +
+ggplot(uuf.cap.cult.axes, aes(x = Cultivation, y = CAP1, fill = Cultivation)) +
+  geom_jitter(position = position_jitter(width = .2), alpha = 0.5) +
+  geom_boxplot(alpha = 0.75, outlier.size = 0, width = 0.7) +
   theme_classic() +
-  scale_color_manual(values = c("brown4", "darkorange")) +
-  labs(x = "Constrained PCo1 (53.6%)", y = "Constrained PCo2 (19.5%)") +
-  theme(text = element_text(size = 30))
+  scale_fill_manual(values = c("brown4", "darkorange")) +
+  labs(x = "", y = "Constrained PCo1") +
+  theme(text = element_text(size = 30), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
 
 
 uuf.cap.cult <- capscale(as.dist(field.uuf) ~ Compartment + Cultivation + Condition(Run), data = field.map, add = T)
