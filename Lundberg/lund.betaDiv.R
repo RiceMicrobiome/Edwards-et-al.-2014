@@ -138,7 +138,7 @@ ggplot(uuf.field.vectors, aes(x = Axis.1, y = Axis.2, color = Compartment)) +
   scale_color_manual(values = c("#377EB8", "#4DAF4A", "#984EA3")) + 
   #scale_shape_manual(values = c(17, 16)) +
   theme_classic() +
-  labs(x = "PCo1 (11.8%)", y = "PCo2 (8.1%)", legend = "", color = "", shape = "") +
+  labs(x = "PCo1 (11.8%)", y = "PCo2 (8.1%)", legend = "", color = "Compartment", shape = "") +
   theme(text = element_text(size = 30), legend.key = element_blank())
 
 
@@ -185,12 +185,11 @@ ggplot(uuf.field.vectors, aes(x = Axis.2, y = Axis.3, color = Cultivation, shape
   theme(axis.title.x = element_text(size = 20), axis.title.y = element_text(size = 20), legend.key = element_blank())
 
 uuf.field.vectors$Cultivation <- gsub("EcoFarm", "Ecofarm", uuf.field.vectors$Cultivation)
-ggplot(uuf.field.vectors, aes(x = Axis.2, y = Axis.3, color = Cultivation, shape = Cultivation)) +
+ggplot(uuf.field.vectors, aes(x = Axis.2, y = Axis.3, color = Cultivation)) +
   geom_hline(y = 0, alpha = 0.3) +
   geom_vline(x = 0, alpha = 0.3) +
   geom_point(size = 9, alpha= 0.75) +
   scale_color_manual(values = c("brown4", "darkorange")) + 
-  scale_shape_manual(values = c(17, 16)) +
   theme_classic() +
   labs(x = "PCo2 (8.1%)", y = "PCo3 (7.0%)", legend = "", color = "", shape = "") +
   theme(text = element_text(size = 30), legend.key = element_blank())
