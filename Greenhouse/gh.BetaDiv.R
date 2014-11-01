@@ -29,12 +29,26 @@ head(wuf.gh.pcoa$values)
 wuf.gh.vectors$site.comp <- paste(wuf.gh.vectors$Compartment, wuf.gh.vectors$Site, sep = " ")
 
 wuf.gh.vectors$Compartment <- factor(wuf.gh.vectors$Compartment, levels = c("Bulk Soil", "Rhizosphere", "Rhizoplane", "Endosphere"))
+wuf.gh.vectors$Cultivar <- gsub("Nipponebare", "Nipponbare", wuf.gh.vectors$Cultivar)
+wuf.gh.vectors$Cultivar <- factor(wuf.gh.vectors$Cultivar, levels = c("Soil", "Glab_B", "Glab_E", "93-11", "IR50", "M104", "Nipponbare"))
+
 comp.cols <- c("#E41A1C", "#984EA3", "#4DAF4A", "#377EBA")
+cult.cols <- c("black", "#006600", "#B2D1B2", "#FF9933", "#FFD6AD", "#660066", "#D1B2D1")
+
 ggplot(wuf.gh.vectors, aes(x = Axis.1, y = Axis.2, color = Compartment, shape = Site)) +
   geom_hline(y = 0, alpha = 0.3) +
   geom_vline(x = 0, alpha = 0.3) +
   geom_point(size = 9, alpha= 0.75) +
   scale_color_manual(values = comp.cols) +
+  theme_classic() +
+  labs(x = "PCo1 (46.3%)", y = "PCo2 (11.5%)", color = "Rhizocompartment", shape = "Site") +
+  theme(text = element_text(size = 30), legend.key = element_blank())
+
+ggplot(wuf.gh.vectors, aes(x = Axis.1, y = Axis.2, color = Cultivar, shape = Site)) +
+  geom_hline(y = 0, alpha = 0.3) +
+  geom_vline(x = 0, alpha = 0.3) +
+  geom_point(size = 9, alpha= 0.75) +
+  scale_color_manual(values = cult.cols) +
   theme_classic() +
   labs(x = "PCo1 (46.3%)", y = "PCo2 (11.5%)", color = "Rhizocompartment", shape = "Site") +
   theme(text = element_text(size = 30), legend.key = element_blank())
@@ -219,12 +233,24 @@ uuf.gh.pcoa <- pcoa(as.dist(uuf.gh.df))
 uuf.gh.vectors <- cbind(gh.map, uuf.gh.pcoa$vectors)
 head(uuf.gh.pcoa$values)
 uuf.gh.vectors$site.comp <- paste(uuf.gh.vectors$Site, uuf.gh.vectors$Compartment, sep = " ")
+uuf.gh.vectors$Compartment <- factor(uuf.gh.vectors$Compartment, levels = c("Bulk Soil", "Rhizosphere", "Rhizoplane", "Endosphere"))
+uuf.gh.vectors$Cultivar <- gsub("Nipponebare", "Nipponbare", uuf.gh.vectors$Cultivar)
+uuf.gh.vectors$Cultivar <- factor(uuf.gh.vectors$Cultivar, levels = c("Soil", "Glab_B", "Glab_E", "93-11", "IR50", "M104", "Nipponbare"))
 
 ggplot(uuf.gh.vectors, aes(x = Axis.1, y = Axis.2, color = Compartment, shape = Site)) +
   geom_hline(y = 0, alpha = 0.3) +
   geom_vline(x = 0, alpha = 0.3) +
   geom_point(size = 9, alpha= 0.75) +
   scale_color_manual(values = c("#E41A1C", "#377EB8", "#4DAF4A",  "#984EA3")) +
+  theme_classic() +
+  labs(x = "PCo1 (18.1%)", y = "PCo2 (14.9%)", color = "", shape = "") +
+  theme(text = element_text(size = 30), legend.key = element_blank())
+
+ggplot(uuf.gh.vectors, aes(x = Axis.1, y = Axis.2, color = Cultivar, shape = Site)) +
+  geom_hline(y = 0, alpha = 0.3) +
+  geom_vline(x = 0, alpha = 0.3) +
+  geom_point(size = 9, alpha= 0.75) +
+  scale_color_manual(values = cult.cols) +
   theme_classic() +
   labs(x = "PCo1 (18.1%)", y = "PCo2 (14.9%)", color = "", shape = "") +
   theme(text = element_text(size = 30), legend.key = element_blank())
