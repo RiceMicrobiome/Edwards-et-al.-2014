@@ -30,13 +30,16 @@ ggplot(subset(cat.m.sum, SampleType != "Soil"), aes(x = SampleType, y = value / 
   geom_bar(stat = "identity", position = "dodge") +
   geom_errorbar(aes(ymin = (value / 100) - (se / 100), ymax = (value / 100) + (se / 100)), width = 0.2, 
                 position = position_dodge(0.9)) +
-  scale_fill_manual(values = c("royalblue4", "orange")) +
+  scale_fill_manual(values = c("dodgerblue4", "darkgoldenrod1")) +
   geom_text(position = position_dodge(1), vjust = -0.8) +
   theme_classic() +
   scale_y_continuous(labels = percent, limits = c(0, 1)) +
   labs(x = "", y = "Percent of Reads", fill = "Read Type") +
   theme(text = element_text(size = 20))
 
-t.test(subset(cat.m, variable == "Microbial" & SampleType == "0h Pre")$value, 
+wilcox.test(subset(cat.m, variable == "Microbial" & SampleType == "0h Pre")$value, 
        subset(cat.m, variable == "Microbial" & SampleType == "0h Post")$value)
-
+wilcox.test(subset(cat.m, variable == "Microbial" & SampleType == "0h Pre")$value, 
+            subset(cat.m, variable == "Microbial" & SampleType == "24h Post")$value)
+wilcox.test(subset(cat.m, variable == "Microbial" & SampleType == "0h Post")$value, 
+            subset(cat.m, variable == "Microbial" & SampleType == "24h Post")$value)
