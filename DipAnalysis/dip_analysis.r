@@ -37,6 +37,9 @@ ggplot(subset(cat.m.sum, SampleType != "Soil"), aes(x = SampleType, y = value / 
   labs(x = "", y = "Percent of Reads", fill = "Read Type") +
   theme(text = element_text(size = 20))
 
-t.test(subset(cat.m, variable == "Microbial" & SampleType == "0h Pre")$value, 
+wilcox.test(subset(cat.m, variable == "Microbial" & SampleType == "0h Pre")$value, 
        subset(cat.m, variable == "Microbial" & SampleType == "0h Post")$value)
-
+wilcox.test(subset(cat.m, variable == "Microbial" & SampleType == "0h Pre")$value, 
+            subset(cat.m, variable == "Microbial" & SampleType == "24h Post")$value)
+wilcox.test(subset(cat.m, variable == "Microbial" & SampleType == "0h Post")$value, 
+            subset(cat.m, variable == "Microbial" & SampleType == "24h Post")$value)
