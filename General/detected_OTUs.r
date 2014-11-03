@@ -10,5 +10,5 @@ write.table(field.samp.counts, file = "~/RMB/Publication/Data/FieldExp/sample_co
 
 gh.counts <- counts[,match(row.names(gh.map), colnames(counts))]
 gh.counts <- gh.counts[rowSums(gh.counts) > 0,]
-gh.samp.counts <- cbind(gh.map, colSums(gh.counts))
+gh.samp.counts <- cbind(gh.map, SampleCounts = colSums(gh.counts))
 write.table(gh.samp.counts, file = "~/RMB/Publication/Data/GreenhouseExp/sample_counts.txt", quote = F, sep = "\t")
