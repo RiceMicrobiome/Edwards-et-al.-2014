@@ -112,11 +112,12 @@ ggplot(uuf.field.vectors, aes(x = Axis.1, y = Axis.2, color = Site)) +
   labs(x = "PCo1 (11.8%)", y = "PCo2 (8.1%)", legend = "", color = "", shape = "") +
   theme(text = element_text(size = 30), legend.key = element_blank())
 
+uuf.field.vectors$lat <- factor(uuf.field.vectors$lat)
 ggplot(uuf.field.vectors, aes(x = Axis.1, y = Axis.2, color = lat)) +
   geom_hline(y = 0, alpha = 0.3) +
   geom_vline(x = 0, alpha = 0.3) +
   geom_point(size = 9, alpha= 0.75) +
-  scale_color_gradientn(colours = rainbow(7)) + 
+  scale_color_manual(values = brewer.pal(n = 10, "YlGnBu")[3:10]) + 
   theme_classic() +
   labs(x = "PCo1 (11.8%)", y = "PCo2 (8.1%)", color = "Latitude") +
   theme(text = element_text(size = 30), legend.key = element_blank())
