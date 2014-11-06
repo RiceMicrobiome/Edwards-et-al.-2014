@@ -24,4 +24,7 @@ fa_to_fq.pl -q H contigs.fa > contigs.fq
 group_order.pl -g groups.txt -q contigs.fq > groups_ordered.txt
 
 # Make the qiime compatible FASTA file
-fa_assemble_from_group.pl groups_ordered.txt contigs.fq > final_seqs.fa
+fa_assemble_from_group.pl groups_ordered.txt contigs.fq > seqs.fa
+
+# Remove contigs with ambiguous bases or with sequences over a threshold
+16S_cleanup.pl -f seqs.fa -m 275 > final_seqs.fa
