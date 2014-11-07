@@ -180,3 +180,18 @@ comp_site_pair_wilcox_test <- function(x) {
 field.adiv <- cbind(field.map, Shannon = diversity(t(field.counts)))
 comp_site_comparisons <- comp_site_pair_wilcox_test(field.adiv)
 write.table(comp_site_comparisons, file = "comp_site_adiv_wilcox.txt", sep = "\t", quote = F, row.names = F)
+
+summary(aov(exp(Shannon) ~ Cultivation * Site * Compartment, data = field.adiv))
+org.rs <- subset(field.adiv, Compartment == "Rhizosphere" & Cultivation == "Organic")
+eco.rs <- subset(field.adiv, Compartment == "Rhizosphere" & Cultivation == "EcoFarm")
+wilcox.test(exp(org.rs$Shannon), exp(eco.rs$Shannon))
+
+org.rp <- subset(field.adiv, Compartment == "Rhizoplane" & Cultivation == "Organic")
+eco.rp <- subset(field.adiv, Compartment == "Rhizoplane" & Cultivation == "EcoFarm")
+wilcox.test(exp(org.rp$Shannon), exp(eco.rp$Shannon))
+
+org.e <- subset(field.adiv, Compartment == "Endosphere" & Cultivation == "Organic")
+eco.e <- subset(field.adiv, Compartment == "Endosphere" & Cultivation == "EcoFarm")
+wilcox.test(exp(org.e$Shannon), exp(eco.e$Shannon))
+
+wilcox.test(exp(field.adiv[Compartment]))
