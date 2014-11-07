@@ -27,3 +27,29 @@ ggplot(all.core.tax, aes(x = Class, fill = Order)) +
   geom_bar() +
   coord_flip() +
   theme(text = element_text(size = 20))
+
+
+## Get counts for each experiment
+gh.counts <- read.table("~/RMB/Publication/Data/GreenhouseExp/gh_otu_table.txt", header = T, row.names = 1)
+field.counts <- read.table("~/RMB/Publication/Data/FieldExp/field_otu_table.txt", header = T, row.names = 1)
+gh.map <- read.table("~/RMB/Publication/Data/GreenhouseExp/gh_map.txt", header = T, row.names = 1)
+field.map <- read.table("~/RMB/Publication/Data/FieldExp/field_map.txt", header = T, row.names = 1)
+
+gh.map$BarcodeSequence <- NULL
+gh.map$LinkerPrimerSequence <- NULL
+gh.map$Field <- NULL
+gh.map$Run <- NULL
+
+field.map$BarcodeSequence <- NULL
+field.map$LinkerPrimerSequence <- NULL
+field.map$Field <- NULL
+field.map$Run <- NULL
+
+gh.core.counts <- melt(cbind(gh.map, t(gh.counts[match(all.core, row.names(gh.counts)), match(row.names(gh.map), colnames(gh.counts))])))
+field.core.counts <- melt(cbind(field.map, t(field.counts[match(all.core, row.names(field.counts)), match(row.names(field.map), colnames(field.counts))])))
+whole.counts <- rbind(gh.core.counts, field.core.counts)
+
+ggplot(whole.counts, aes(x = Compartment, y = value, fill = variable)) +
+  geom_boxplot() +
+  facet_grid(Cultivation ~ .) +
+  ylim(0,5000)
